@@ -7,15 +7,16 @@ Folder structure:
 ```
 ├── .github/
 ├── data/
-│   ├── frames/
+│   ├── interim/
 │   └── raw_videos/
 ├── notebooks/
 │   ├── 00_video_downloader.ipynb
 │   └── 01_video_preprocessing.ipynb
 ├── src/
-│   └── preprocessing/
-│       ├── VideoLoader.py
-│       └── FrameExtractor.py
+│   ├── preprocessing/
+│   │   ├── video_loader.py
+│   │   └── frame_extractor.py
+│   └── config.py
 ├── .gitignore
 ├── README.md
 └── requirements.txt
