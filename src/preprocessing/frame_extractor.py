@@ -27,12 +27,14 @@ class FrameExtractor:
         target_width=640,
         target_height=360,
         display_every_n=10,
+        yolo_skip_interval=5,
     ):
         self.vid_capture = vid_capture
         self.target_fps = target_fps
         self.target_width = target_width
         self.target_height = target_height
         self.display_every_n = display_every_n
+        self.yolo_skip_interval = yolo_skip_interval
         self.original_fps = vid_capture.original_fps
         self.time_interval_sec = 1.0 / self.target_fps if self.target_fps > 0 else 1.0
 
@@ -93,7 +95,8 @@ class FrameExtractor:
         }
         prev_hist = None
         prev_frame = None
-        prev_num_players = None
+        prev_num_players = 0
+        prev_has_ball = False
 
         print(
             f"Starting extraction from {start_minute}m to {end_minute if end_minute else 'end'}m..."
@@ -169,9 +172,16 @@ class FrameExtractor:
                 has_ball = False
                 if filter_replays:
                     is_slow_mo = FrameFilters.is_slow_motion(prev_frame, resized)
-                    num_players, has_ball = FrameFilters.detect_players_and_ball(
-                        resized
-                    )
+
+                    # YOLO skip logic: Only detect every N analyzed frames
+                    if (stats["frames_analyzed"] - 1) % self.yolo_skip_interval == 0:
+                        num_players, has_ball = FrameFilters.detect_players_and_ball(
+                            resized
+                        )
+                    else:
+                        # Reuse previous detection results
+                        num_players = prev_num_players
+                        has_ball = prev_has_ball
 
                 is_replay = False
                 if filter_replays:
@@ -219,6 +229,7 @@ class FrameExtractor:
                 if filter_replays:
                     prev_frame = resized.copy()
                     prev_num_players = num_players
+                    prev_has_ball = has_ball
 
                 # Write to Log
                 logger.log_frame(
